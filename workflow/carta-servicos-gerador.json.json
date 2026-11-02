@@ -1,0 +1,540 @@
+{
+  "name": "Carta de Serviços - Gerador de Requerimentos",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        112
+      ],
+      "id": "42a5d0a7-df6d-4a67-8870-4466e4de6b73",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1OT4-lQe00UWhLax0-1iEhi0_5xAppmJsaZ8hRTu4rJI",
+          "mode": "list",
+          "cachedResultName": "servicos_entrada",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OT4-lQe00UWhLax0-1iEhi0_5xAppmJsaZ8hRTu4rJI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OT4-lQe00UWhLax0-1iEhi0_5xAppmJsaZ8hRTu4rJI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "pendente"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -192,
+        112
+      ],
+      "id": "a252a549-7081-4d02-a44c-d64e6d3bb18c",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "acTYt3AJ66J67eHS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Serviço: {{ $json.servico }}\nSetor responsável: {{ $json.setor_responsavel }}\nAnotações: {{ $json.anotacoes }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Você é especialista em redação de serviços públicos da Prefeitura Municipal de Itabirito (MG). Sua tarefa é transformar anotações internas sobre um serviço em um requerimento padronizado para a Carta de Serviços ao Usuário (Lei 13.460/2017).  REGRAS OBRIGATÓRIAS: 1. NUNCA invente informações. Use apenas o que está nas anotações. 2. Se uma informação necessária não estiver nas anotações, escreva exatamente \"[CONFIRMAR]\" no campo e registre o que falta em \"pendencias\". 3. Linguagem simples, clara e direta, voltada ao cidadão comum. Frases curtas, sem jargão jurídico ou administrativo. 4. Escreva nomes de setores e serviços com iniciais maiúsculas (ex.: \"Departamento de Trânsito\"). 5. Em \"documentos\", liste apenas documentos, um por linha, começando com \"• \". Informações que o cidadão precisa fornecer (telefone, local, descrição) não são documentos: coloque-as em uma linha final \"Informações que devem constar no pedido: ...\". 6. Em \"etapas\", numere os passos (1., 2., 3.), um por linha. 7. Em \"como_solicitar\", liste cada canal em uma linha, começando com \"• \". 8. Se não houver custo, escreva \"Gratuito\". 9. Se não houver informação sobre quem pode solicitar, use \"[CONFIRMAR]\". 10. Em \"descricao\", explique em 1 ou 2 frases para que serve o serviço e em que situação o cidadão deve usá-lo, sem repetir o nome do serviço. 11. Em \"etapas\", escreva frases completas do ponto de vista do cidadão (ex.: \"Faça a solicitação por um dos canais disponíveis.\", \"Aguarde a análise do Departamento de Trânsito.\")."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1,
+          "delayBetweenBatches": 15000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        16,
+        112
+      ],
+      "id": "31832443-6e43-4f53-b764-5f34a4a86cbb",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-lite-latest",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        400
+      ],
+      "id": "ef53924a-974f-47af-adc1-ee9ddebe5ea5",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "3jPaWp3QrtwozR6R",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"nome_servico\": \"Solicitar sinalização viária\",\n  \"descricao\": \"Texto explicando o serviço.\",\n  \"publico\": \"Qualquer cidadão.\",\n  \"documentos\": \"• Documento de identidade\\nInformações que devem constar no pedido: telefone, local.\",\n  \"etapas\": \"1. Passo um.\\n2. Passo dois.\",\n  \"prazo\": \"Até 30 dias.\",\n  \"custo\": \"Gratuito\",\n  \"como_solicitar\": \"• Canal um\\n• Canal dois\",\n  \"setor\": \"Departamento de Trânsito\",\n  \"pendencias\": \"Lista do que precisa ser confirmado, ou 'Nenhuma'.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        400
+      ],
+      "id": "7d5999c2-138c-4459-b40a-9310ee7e03c1",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1inNx1hZN5PO4o-NcKrc1l97xqJlMm-5Usq9tqg1nx-k",
+          "mode": "list",
+          "cachedResultName": "MODELO_requerimento",
+          "cachedResultUrl": "https://docs.google.com/document/d/1inNx1hZN5PO4o-NcKrc1l97xqJlMm-5Usq9tqg1nx-k/edit?usp=drivesdk"
+        },
+        "name": "=Requerimento - {{ $json.output.nome_servico }}",
+        "sameFolder": false,
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1bw30Pmi__eN0ZLDAVKnpLUjsa8QFLeH9",
+          "mode": "list",
+          "cachedResultName": "Requerimentos gerados",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1bw30Pmi__eN0ZLDAVKnpLUjsa8QFLeH9"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        384,
+        112
+      ],
+      "id": "b473b64b-a7e4-474f-9377-ecd170c6ca2a",
+      "name": "Copy file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pM3iCtziOMT6shSl",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "{{NOME_SERVICO}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.nome_servico }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{DESCRICAO}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.descricao }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{PUBLICO}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.publico }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{DOCUMENTOS}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.documentos }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{ETAPAS}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.etapas }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{PRAZO}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.prazo }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{CUSTO}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.custo }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{COMO_SOLICITAR}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.como_solicitar }}",
+              "matchCase": true
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{SETOR}}",
+              "replaceText": "={{ $('Basic LLM Chain').item.json.output.setor }}",
+              "matchCase": true
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        608,
+        112
+      ],
+      "id": "f3f06076-486d-45c0-befd-18233239c064",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "gM2Da7SsdZSITzFW",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Copy file').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        848,
+        112
+      ],
+      "id": "d0bcb3cc-846c-4de6-966e-f006c543fb61",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pM3iCtziOMT6shSl",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Copy file').item.json.name }}.pdf",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1sUtXrMym0SgpEIschwGiViyVrrID-Y6J",
+          "mode": "list",
+          "cachedResultName": "PDFs",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1sUtXrMym0SgpEIschwGiViyVrrID-Y6J"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1024,
+        112
+      ],
+      "id": "39d503b5-2af0-4be2-a3c8-e65a28a3c49f",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pM3iCtziOMT6shSl",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1OT4-lQe00UWhLax0-1iEhi0_5xAppmJsaZ8hRTu4rJI",
+          "mode": "list",
+          "cachedResultName": "servicos_entrada",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OT4-lQe00UWhLax0-1iEhi0_5xAppmJsaZ8hRTu4rJI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OT4-lQe00UWhLax0-1iEhi0_5xAppmJsaZ8hRTu4rJI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Get row(s) in sheet').all()[$itemIndex].json.id }}",
+            "status": "={{ $('Basic LLM Chain').item.json.output.pendencias.toLowerCase().startsWith('nenhuma') ? 'gerado' : 'revisar' }}",
+            "link_pdf": "={{ $json.webViewLink }}",
+            "pendencias": "={{ $('Basic LLM Chain').item.json.output.pendencias }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "anotacoes",
+              "displayName": "anotacoes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "setor_responsavel",
+              "displayName": "setor_responsavel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link_pdf",
+              "displayName": "link_pdf",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pendencias",
+              "displayName": "pendencias",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1248,
+        112
+      ],
+      "id": "d9bbfd73-3756-43bd-9d34-e91cbec0d9bc",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "acTYt3AJ66J67eHS",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Copy file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy file": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "35e6cc93-fa6b-4361-aad3-56b75f8f361d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c127bc9c79741074c984fc00d5ce1c373427c964d7fe64e57c0fabf0faeafad"
+  },
+  "nodeGroups": [],
+  "id": "vVKmJTwBFsiwZEJP",
+  "tags": []
+}
